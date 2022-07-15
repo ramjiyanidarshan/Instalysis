@@ -16,3 +16,16 @@ class InvalidMessageType(Exception):
         super().__init__(f"Invalid message type '{message_type}'.")
         return
 
+
+class AppUserNotFound(Exception):
+
+    def __int__(self):
+        super().__init__("App user is not set.")
+        return
+
+
+class NoneTargetProfile(Exception):
+
+    def __int__(self):
+        super.__init__("Target profile is None. Please set it first.")
+        return

@@ -47,8 +47,8 @@ class InstagramAccount:
     def set_name(self, name: str) -> None:
         self.__name = name
 
-    def set_instagram_profile_link(self, link: str) -> None:
-        self.__instagram_profile_link = link
+    def set_instagram_profile_link(self) -> None:
+        self.__instagram_profile_link = f"https://www.instagram.com/{self.__username}"
 
     def set_hd_profile_picture_link(self, link: str) -> None:
         self.__hd_profile_picture_link = link
