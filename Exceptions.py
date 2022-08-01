@@ -29,3 +29,9 @@ class NoneTargetProfile(Exception):
     def __int__(self):
         super.__init__("Target profile is None. Please set it first.")
         return
+
+
+class EmptyRequiredPropertyException(Exception):
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

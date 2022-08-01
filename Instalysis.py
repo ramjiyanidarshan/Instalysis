@@ -1,31 +1,31 @@
 """
 author: DSP
 """
-from os.path import expanduser
 
 from instaloader import instaloader, Profile
 from instaloader.exceptions import *
-
-import Exceptions
 from Instagram.InstagramAccount import InstagramAccount
-from Common import printf
+from Common import printf, download_posts, fetch_specific_setting
 
 
 class Instalysis:
-    __app_user: InstagramAccount
-    __instaloader_context: instaloader.Instaloader
 
-    __target_profile: Profile = None
+    __target_user: InstagramAccount
+    __instaloader_context = None
 
     def __init__(self):
-        self.__app_user = InstagramAccount()
         self.__instaloader_context = instaloader.Instaloader()
+        self.__target_user = None
         return
 
-    def set_target_profile(self, target_username):
+    def set_target_profile(self, target_username: str) -> InstagramAccount:
+        self.app_user_login()
         while True:
             try:
-                self.__target_profile = Profile.from_username(self.__instaloader_context, target_username)
+                self.__target_user = InstagramAccount(Profile.from_username(self.__instaloader_context.context,
+                                                                            target_username))
+                printf(f"Target '{target_username}' has been set.", "info")
+                break
             except ProfileNotExistsException:
                 printf(f"Target username '{target_username}' is not correct.", "error")
                 choice = input("Would you like to enter again?[Y/n]\t:\t")
@@ -35,54 +35,38 @@ class Instalysis:
                     printf("Task abort", "error")
                     break
             except Exception as e:
-                printf(f"Task abort due to unhandled error. Error :- {e.args}", "error")
+                printf(f"Task abort due to unhandled error. Error :- {e.args.__str__()}", "error")
+                break
+        printf("Exploration in progress...", "info")
+        self.__target_user.full_explore()
+        printf("Exploration done.", "success")
+        return self.__target_user
+
+    def save_own_post(self) -> None:
+        download_posts(self.__target_user.get_own_post(), f"IMG-{self.__target_user.get_username()}-OwnPost-")
         return
 
-    def explore_target(self, target_username: str) -> InstagramAccount:
-        target: InstagramAccount = InstagramAccount()
-
-        target.set_username(self.__target_profile.username)
-        target.set_followers(set(self.__target_profile.get_followers()))
-        target.set_followings(set(self.__target_profile.get_followees()))
-        target.set_unfollowers()
-        target.set_unfollowings()
-        target.set_hd_profile_picture_link(self.__target_profile.get_profile_pic_url())
-        target.set_instagram_profile_link()
-        target.set_name(self.__target_profile.full_name)
-        return target
-
-    def save_post(self, target_username: str) -> None:
-        if self.__target_profile is not None:
-            self.__target_profile.get_posts()
-        else:
-            raise Exceptions.NoneTargetProfile()
+    def save_saved_post(self):
+        download_posts(self.__target_user.get_saved_post(), f"IMG-{self.__target_user.get_username()}-SavedPost-")
         return
 
-    def get_tagged_post(self):
-        if self.__target_profile is not None:
-            self.__target_profile.get_tagged_posts()
-        else:
-            raise Exceptions.NoneTargetProfile()
+    def save_tagged_post(self):
+        download_posts(self.__target_user.get_tagged_post(), f"IMG-{self.__target_user.get_username()}-TaggedPost-")
         return
-
-    def get_saved_post(self):
-        if self.__target_profile is not None:
-            self.__target_profile.get_saved_posts()
-        else:
-            raise Exceptions.NoneTargetProfile()
-        return
-
-    def check_for_app_user(self):
-        pass
 
     def app_user_login(self) -> bool:
         from Common import printf
 
         username: str
-        passwd: str = None
+        passwd: str = ""
 
         print("\u001b[34;1m*\tInstagram Login\t*\u001b[0m\n")
-        username = input("Enter Username\t:\t")
+
+        if fetch_specific_setting("IsUserLoggedIn"):
+            username = fetch_specific_setting("LoggedInUser")
+        else:
+            username: str = "ramjiyanidarshan"
+            # username = input("Enter Username\t:\t")
 
         while True:
             loggedin: bool = False
@@ -100,7 +84,7 @@ class Instalysis:
                     loggedin = True
                     break
 
-            except TwoFactorAuthRequiredException as e:
+            except TwoFactorAuthRequiredException:
                 printf("Two factor authentication required.", "warning")
                 while True:
                     try:
@@ -111,7 +95,7 @@ class Instalysis:
                         printf("TFA verification code is not matched.Try again.", "error")
                         continue
                     except InstaloaderException as e:
-                        printf(e.args, "error")
+                        printf(e.args.__str__(), "error")
                 if loggedin:
                     break
                 else:
@@ -144,6 +128,6 @@ class Instalysis:
                     printf("Task abort.", "error")
                     break
             except InstaloaderException as e:
-                printf(e.args, "error")
+                printf(e.args.__str__(), "error")
 
         return loggedin

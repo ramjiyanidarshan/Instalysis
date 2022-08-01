@@ -2,12 +2,13 @@
 author: DSP
 """
 
-from os.path import exists
-from Exceptions import SettingFileNotFound, InvalidMessageType
 import json
+from os.path import exists
 
+from Exceptions import SettingFileNotFound, InvalidMessageType
 
 # -*- Global Variables -*-
+
 banner_ascii_text = """\u001b[32;1m
   _____           _        _           _     
  |_   _|         | |      | |         (_)    
@@ -19,11 +20,20 @@ banner_ascii_text = """\u001b[32;1m
                              \u001b[32;1m|___/\u001b[0m"""
 
 app_folder: str = "~/Instalysis"
+result_folder: str = "~/Documents/Instalysis"
 settings_file_location: str = app_folder + "/settings.json"
+
+default_setting: dict = {
+    "ShowPasswordOnStdOutDevice": True,
+    "IsUserLoggedIn": False,
+    "LoggedInUser": None,
+    "OSEnvironment": None,
+    "ClearCommands": None,
+    "LogsLocation": app_folder + "/.logs/"
+}
 
 
 # -*- Common Functions definitions -*-
-
 def fetch_settings() -> dict:
     from os.path import expanduser
 
@@ -88,7 +98,31 @@ def neofetch():
     return
 
 
-if __name__ == '__main__':
-    neofetch()
-    # i = Instalysis()
-    # i.app_user_login()
+def download_image(image_url: str, file_name: str):
+    import requests
+    import shutil
+    from os.path import exists, expanduser
+
+    if exists(expanduser(file_name)):
+        file_name = file_name.partition(".")[0] + "-1." + file_name.partition(".")[2]
+
+    res = requests.get(image_url, stream=True)
+
+    if res.status_code == 200:
+        print(f"Downloading post - {file_name}...", end="")
+        with open(file_name, 'wb') as f:
+            shutil.copyfileobj(res.raw, f)
+        print("done")
+    else:
+        printf(f"HTTP request error code : {res.status_code}", "error")
+    return
+
+
+def download_posts(post_list: list, file_name_pattern: str):
+    if post_list is None or []:
+        printf("No posts to download and save.", "info")
+    else:
+        count = 1
+        for post in post_list:
+            download_image(post, file_name_pattern + str.zfill(str(count), 3) + ".jpg")
+            count += 1
